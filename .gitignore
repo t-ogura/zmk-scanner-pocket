@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+*.uf2
+
+# West workspace (fetched by west update)
+.west/
+zephyr/
+zmk/
+modules/
+optional/
+tools/
+
+# Python virtual environment
+.venv/
+*.pyc
+__pycache__/
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
