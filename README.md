@@ -25,13 +25,21 @@ Scanner Pocket is a standalone display device that shows real-time keyboard stat
 
 ### Pinout
 
-| Signal | XIAO Pin |
-|--------|----------|
-| LCD_SI (MOSI) | D10 |
-| LCD_SCLK | D8 |
-| LCD_SCS | D7 |
-| DISP | D3 |
-| EXTCOMIN | D6 |
+**Sharp Memory LCD (SPI1)**
+
+| Signal | XIAO Pin | nRF52 |
+|--------|----------|-------|
+| LCD_SI (MOSI) | D4 | P0.04 |
+| LCD_SCLK | D5 | P0.05 |
+| LCD_SCS (CS, Active HIGH) | D6 | P1.11 |
+
+**Buttons** (common side to XIAO GND pin)
+
+| Signal | XIAO Pin | nRF52 | Notes |
+|--------|----------|-------|-------|
+| Navigation Button | D0 | P0.02 | Toggle main / keyboard list |
+| Button (reserved) | D1 | P0.03 | Function TBD |
+| Button (reserved) | D2 | P0.28 | Function TBD |
 
 ## Display Layout
 
