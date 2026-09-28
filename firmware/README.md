@@ -17,6 +17,7 @@
 | 1 | `scanner_pocket_v0.1_c25d43f_D10-D9-D8_navD6.uf2` | v0.1（タグ有） | D10/D9/D8・nav D6 | v2.1 系 | v0.1 当時に動作 |
 | 2 | `scanner_pocket_newpin_f9a6372_D4-D5-D6_navD0.uf2` | タグ無（移植前） | **D4/D5/D6・nav D0** | v2.1 系 | 2026-05-27 にこの構成で動作 |
 | 3 | `scanner_pocket_core2.2.3_1b8ef72_D4-D5-D6_navD0.uf2` | タグ無（移植後） | **D4/D5/D6・nav D0** | v2.2.3 共有コア | **未検証**（不調報告あり） |
+| D | `scanner_pocket_newpin_f9a6372_D4-D5-D6_navD0_DEBUG-usblog.uf2` | #2 + USB ログ | **D4/D5/D6・nav D0** | v2.1 系 | 診断用 |
 
 > 現在の実機配線は #2 / #3 の **D4/D5/D6・nav D0** です。#1 は旧配線なので、いまの基板では映りません。
 
@@ -61,6 +62,45 @@
   （全キーボードのタイムアウト後にスロットが陳腐化して「Scanning...」から復帰しない問題は
   カラー版で 2026-08-31 に修正済みだが、この版はそれより前）。
 - 再現: `git -C modules/prospector-zmk-module checkout feature/scanner-pocket-v2.3`
+
+---
+
+## D. 診断用: #2 + USB CDC シリアルログ
+
+通常版は `CONFIG_LOG=n` かつ `CONFIG_CONSOLE` 未設定で**完全に無言**（LED も一切駆動しない）ため、
+マイコンが生きているかを確認できない。その診断用に #2 へログを足したもの。
+
+- **ソース**: #2 と同一（モジュール `f9a6372`、config `0cfd9e1`）。差分は Kconfig のみでコード変更なし。
+- **サイズ**: 839,168 B / FLASH 419,388 B (51.97%) / RAM 135,796 B (51.80%)
+- **sha256**: `c7b843922984bfa13ced393ebbfb490c9522778ab32a1489c6789a1139ae16ab`
+- **追加設定**: `debug_log.conf`（このディレクトリに保存）+ `-DSNIPPET=zmk-usb-logging`
+
+```bash
+git -C modules/prospector-zmk-module checkout f9a6372
+rm -rf build && .venv/bin/west build -b xiao_ble/nrf52840 -s zmk/app -- \
+  -DSHIELD=scanner_pocket \
+  -DZMK_CONFIG="/home/ogu/workspace/prospector/zmk-scanner-pocket/config" \
+  -DSNIPPET="zmk-usb-logging" \
+  -DEXTRA_CONF_FILE="/home/ogu/workspace/prospector/zmk-scanner-pocket/firmware/debug_log.conf"
+```
+
+**ログの読み方**: USB 接続で CDC ACM シリアルポートとして現れる（Linux/WSL は `/dev/ttyACM0`、
+Windows は COMx）。ボーレートは CDC なので任意。
+
+```bash
+screen /dev/ttyACM0 115200      # or: minicom -D /dev/ttyACM0
+```
+
+**重要な制約**: ログは DEFERRED モードで、ZMK が `LOG_PROCESS_THREAD_STARTUP_DELAY_MS=1000` を
+設定している。USB 列挙を待ってからバッファを吐く設計なので起動直後のログも取れるが、
+**起動 1 秒以内にクラッシュするとバッファごと失われる**。その場合は下記へ切り替える。
+
+- **UART 版**: D1/D2 が空いているので物理 UART に出せる（`CONFIG_LOG_MODE_IMMEDIATE=y` と併用で
+  最初の 1 行から取れる）。USB-TTL アダプタが必要。
+- **RTT 版**: `CONFIG_ZMK_RTT_LOGGING=y`。SWD プローブ（J-Link 等）が必要。
+
+なおこの Zephyr 4.1 では fatal error が `arch_system_halt` になる（`RESET_ON_FATAL_ERROR` が無い）ため、
+**あらゆるクラッシュがフリーズとして見える**。無反応 = 電源やクロックの問題とは限らない。
 
 ---
 
